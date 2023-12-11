@@ -18,6 +18,8 @@ TODO
 ## Dependencies
 
 - [Pixel Font Builder](https://github.com/TakWolf/pixel-font-builder)
+- [Unidata Blocks](https://github.com/TakWolf/unidata-blocks)
+- [PyPNG](https://gitlab.com/drj11/pypng)
 
 ## License
 

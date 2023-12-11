@@ -24,6 +24,8 @@ classifiers = [
 
 dependencies = [
     "pixel-font-builder>=0.0.12",
+    "unidata-blocks>=0.0.8",
+    "pypng>=0.20220715.0",
 ]
 
 [project.urls]
