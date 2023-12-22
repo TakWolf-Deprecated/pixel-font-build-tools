@@ -71,11 +71,11 @@ class GlyphInfo:
         name_flavors = file_info.name_flavors
         if len(name_flavors) == 0:
             name_flavor = _DEFAULT_NAME_FLAVOR
-            assert name_flavor not in dir_flavor_registry, f"Glyph file default name flavor already exists: '{file_info.file_path}'"
+            assert name_flavor not in dir_flavor_registry, f"Glyph file default name flavor already exists:\n'{file_info.file_path}'\n'{dir_flavor_registry[name_flavor].file_path}'"
             dir_flavor_registry[name_flavor] = file_info
         else:
             for name_flavor in name_flavors:
-                assert name_flavor not in dir_flavor_registry, f"Glyph file name flavor '{name_flavor}' already exists: '{file_info.file_path}'"
+                assert name_flavor not in dir_flavor_registry, f"Glyph file name flavor '{name_flavor}' already exists:\n'{file_info.file_path}'\n'{dir_flavor_registry[name_flavor].file_path}'"
                 dir_flavor_registry[name_flavor] = file_info
 
 
@@ -155,7 +155,7 @@ class DesignContext:
                 file_path = os.path.join(file_dir, file_name)
 
                 if file_path != old_file_path:
-                    assert not os.path.exists(file_path), f"Glyph file duplicate:\n'{file_path}'\n{old_file_path}"
+                    assert not os.path.exists(file_path), f"Glyph file duplicate:\n'{file_path}'\n'{old_file_path}'"
                     fs_util.make_dirs(file_dir)
                     os.rename(old_file_path, file_path)
                     file_info.file_path = file_path
