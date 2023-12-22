@@ -1,8 +1,11 @@
+import logging
 import os
 
 import unidata_blocks
 
 from pixel_font_build_tools.utils import glyph_util, fs_util
+
+logger = logging.getLogger('pixel_font_build_tools.context')
 
 _HEX_NAME_NOTDEF = 'notdef'
 _DEFAULT_DIR_FLAVOR = 'common'
@@ -107,6 +110,7 @@ class DesignContext:
                         code_point_to_glyph_info[code_point] = glyph_info
                     glyph_info.add_glyph_file_info(glyph_file_info)
                     path_to_glyph_file_info[str(glyph_file_info.file_path)] = glyph_file_info
+                    logger.debug("Glyph file loaded: '%s'", glyph_file_info.file_path)
         return DesignContext(
             root_dir,
             defined_dir_flavors,
@@ -161,6 +165,7 @@ class DesignContext:
                     file_info.file_path = file_path
                     self.path_to_glyph_file_info.pop(old_file_path)
                     self.path_to_glyph_file_info[file_path] = file_info
+                    logger.debug("Fixed glyph file path:\nfrom '%s'\nto   '%s'", old_file_path, file_path)
 
             other_file_names = os.listdir(old_file_dir)
             if '.DS_Store' in other_file_names:
