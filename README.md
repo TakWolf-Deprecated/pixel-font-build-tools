@@ -11,10 +11,6 @@ A set of tools for building pixel fonts.
 pip install pixel-font-build-tools
 ```
 
-## Usage
-
-TODO
-
 ## Dependencies
 
 - [Pixel Font Builder](https://github.com/TakWolf/pixel-font-builder)
