@@ -14,7 +14,7 @@ _DEFAULT_NAME_FLAVOR = 'default'
 
 class GlyphFileInfo:
     @staticmethod
-    def load(
+    def by(
             file_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             file_name: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             dir_flavor: str,
@@ -56,6 +56,11 @@ class GlyphFileInfo:
         self.dir_flavor = dir_flavor
         self.name_flavors = name_flavors
         self.glyph_data, self.glyph_width, self.glyph_height = glyph_util.load_glyph_data_from_png(file_path)
+        logger.debug("Load glyph data: '%s'", file_path)
+
+    def save_glyph_data(self):
+        glyph_util.save_glyph_data_to_png(self.glyph_data, self.file_path)
+        logger.debug("Save glyph data: '%s'", self.file_path)
 
 
 class GlyphInfo:
@@ -101,7 +106,7 @@ class DesignContext:
                 for file_name in file_names:
                     if not file_name.endswith('.png'):
                         continue
-                    file_info = GlyphFileInfo.load(file_dir, file_name, dir_flavor, defined_name_flavors)
+                    file_info = GlyphFileInfo.by(file_dir, file_name, dir_flavor, defined_name_flavors)
                     code_point = file_info.code_point
                     if code_point in code_point_to_glyph_info:
                         glyph_info = code_point_to_glyph_info[code_point]
@@ -110,7 +115,6 @@ class DesignContext:
                         code_point_to_glyph_info[code_point] = glyph_info
                     glyph_info.add_glyph_file_info(file_info)
                     path_to_glyph_file_info[str(file_info.file_path)] = file_info
-                    logger.debug("Glyph file loaded: '%s'", file_info.file_path)
         return DesignContext(
             root_dir,
             defined_dir_flavors,
@@ -140,7 +144,7 @@ class DesignContext:
                     continue
                 old_file_path = os.path.join(old_file_dir, old_file_name)
                 file_info = self.path_to_glyph_file_info[old_file_path]
-                glyph_util.save_glyph_data_to_png(file_info.glyph_data, old_file_path)
+                file_info.save_glyph_data()
 
                 code_point = file_info.code_point
                 if code_point == -1:
@@ -165,7 +169,7 @@ class DesignContext:
                     file_info.file_path = file_path
                     self.path_to_glyph_file_info.pop(old_file_path)
                     self.path_to_glyph_file_info[file_path] = file_info
-                    logger.debug("Fixed glyph file path:\nfrom '%s'\nto   '%s'", old_file_path, file_path)
+                    logger.debug("Fix glyph file path:\nfrom '%s'\nto   '%s'", old_file_path, file_path)
 
             other_file_names = os.listdir(old_file_dir)
             if '.DS_Store' in other_file_names:
