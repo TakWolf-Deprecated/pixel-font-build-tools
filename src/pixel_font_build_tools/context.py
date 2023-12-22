@@ -145,11 +145,13 @@ class DesignContext:
                     hex_name = f'{code_point:04X}'
                 name_flavors = file_info.name_flavors
                 file_name = f'{hex_name}{"" if len(name_flavors) == 0 else " "}{",".join(name_flavors)}.png'
-                block = unidata_blocks.get_block_by_code_point(code_point)
-                block_dir_name = f'{block.code_start:04X}-{block.code_end:04X} {block.name}'
-                if block.code_start == 0x4E00:  # CJK Unified Ideographs
-                    block_dir_name = os.path.join(block_dir_name, f'{hex_name[0:-2]}-')
-                file_dir = os.path.join(self.root_dir, file_info.dir_flavor, block_dir_name)
+                file_dir = os.path.join(self.root_dir, file_info.dir_flavor)
+                if code_point != -1:
+                    block = unidata_blocks.get_block_by_code_point(code_point)
+                    block_dir_name = f'{block.code_start:04X}-{block.code_end:04X} {block.name}'
+                    if block.code_start == 0x4E00:  # CJK Unified Ideographs
+                        block_dir_name = os.path.join(block_dir_name, f'{hex_name[0:-2]}-')
+                    file_dir = os.path.join(file_dir, block_dir_name)
                 file_path = os.path.join(file_dir, file_name)
 
                 if file_path != old_file_path:
