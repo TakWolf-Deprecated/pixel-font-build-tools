@@ -97,20 +97,20 @@ class DesignContext:
                 continue
             if dir_flavor != _DEFAULT_DIR_FLAVOR and defined_dir_flavors is not None:
                 assert dir_flavor in defined_dir_flavors, f"Undefined dir flavor: '{dir_flavor}'"
-            for glyph_file_dir, _, glyph_file_names in os.walk(dir_flavor_path):
-                for glyph_file_name in glyph_file_names:
-                    if not glyph_file_name.endswith('.png'):
+            for file_dir, _, file_names in os.walk(dir_flavor_path):
+                for file_name in file_names:
+                    if not file_name.endswith('.png'):
                         continue
-                    glyph_file_info = GlyphFileInfo.load(glyph_file_dir, glyph_file_name, dir_flavor, defined_name_flavors)
-                    code_point = glyph_file_info.code_point
+                    file_info = GlyphFileInfo.load(file_dir, file_name, dir_flavor, defined_name_flavors)
+                    code_point = file_info.code_point
                     if code_point in code_point_to_glyph_info:
                         glyph_info = code_point_to_glyph_info[code_point]
                     else:
                         glyph_info = GlyphInfo(code_point)
                         code_point_to_glyph_info[code_point] = glyph_info
-                    glyph_info.add_glyph_file_info(glyph_file_info)
-                    path_to_glyph_file_info[str(glyph_file_info.file_path)] = glyph_file_info
-                    logger.debug("Glyph file loaded: '%s'", glyph_file_info.file_path)
+                    glyph_info.add_glyph_file_info(file_info)
+                    path_to_glyph_file_info[str(file_info.file_path)] = file_info
+                    logger.debug("Glyph file loaded: '%s'", file_info.file_path)
         return DesignContext(
             root_dir,
             defined_dir_flavors,
