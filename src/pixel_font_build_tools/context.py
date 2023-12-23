@@ -143,6 +143,7 @@ class DesignContext:
                 if not old_file_name.endswith('.png'):
                     continue
                 old_file_path = os.path.join(old_file_dir, old_file_name)
+                assert old_file_path in self.path_to_glyph_file_info, f"Unmatched glyph file: '{old_file_path}'"
                 file_info = self.path_to_glyph_file_info[old_file_path]
                 file_info.save_glyph_data()
 
