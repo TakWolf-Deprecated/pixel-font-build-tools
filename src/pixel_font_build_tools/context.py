@@ -14,7 +14,7 @@ _DEFAULT_NAME_FLAVOR = 'default'
 
 class GlyphFileInfo:
     @staticmethod
-    def by(
+    def load(
             file_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             file_name: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             dir_flavor: str,
@@ -106,7 +106,7 @@ class DesignContext:
                 for file_name in file_names:
                     if not file_name.endswith('.png'):
                         continue
-                    file_info = GlyphFileInfo.by(file_dir, file_name, dir_flavor, defined_name_flavors)
+                    file_info = GlyphFileInfo.load(file_dir, file_name, dir_flavor, defined_name_flavors)
                     code_point = file_info.code_point
                     if code_point in code_point_to_glyph_info:
                         glyph_info = code_point_to_glyph_info[code_point]
