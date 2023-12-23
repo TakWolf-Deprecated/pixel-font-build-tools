@@ -1,5 +1,6 @@
 import logging
 import os
+from collections import defaultdict
 
 import unidata_blocks
 
@@ -66,23 +67,16 @@ class GlyphFileInfo:
 class GlyphInfo:
     def __init__(self, code_point: int):
         self.code_point = code_point
-        self.file_info_registry: dict[str, dict[str, GlyphFileInfo]] = {}
+        self._file_info_registry: dict[str, dict[str, GlyphFileInfo]] = defaultdict(dict)
 
     def add_glyph_file_info(self, file_info: GlyphFileInfo):
-        dir_flavor = file_info.dir_flavor
-        if dir_flavor in self.file_info_registry:
-            dir_flavor_registry = self.file_info_registry[dir_flavor]
-        else:
-            dir_flavor_registry = {}
-            self.file_info_registry[dir_flavor] = dir_flavor_registry
-
-        name_flavors = file_info.name_flavors
-        if len(name_flavors) == 0:
+        dir_flavor_registry = self._file_info_registry[file_info.dir_flavor]
+        if len(file_info.name_flavors) == 0:
             name_flavor = _DEFAULT_NAME_FLAVOR
             assert name_flavor not in dir_flavor_registry, f"Glyph file default name flavor already exists:\n'{file_info.file_path}'\n'{dir_flavor_registry[name_flavor].file_path}'"
             dir_flavor_registry[name_flavor] = file_info
         else:
-            for name_flavor in name_flavors:
+            for name_flavor in file_info.name_flavors:
                 assert name_flavor not in dir_flavor_registry, f"Glyph file name flavor '{name_flavor}' already exists:\n'{file_info.file_path}'\n'{dir_flavor_registry[name_flavor].file_path}'"
                 dir_flavor_registry[name_flavor] = file_info
 
@@ -96,6 +90,7 @@ class DesignContext:
     ) -> 'DesignContext':
         code_point_to_glyph_info = {}
         path_to_glyph_file_info = {}
+
         for dir_flavor in os.listdir(root_dir):
             dir_flavor_path = os.path.join(root_dir, dir_flavor)
             if not os.path.isdir(dir_flavor_path):
@@ -115,6 +110,7 @@ class DesignContext:
                         code_point_to_glyph_info[code_point] = glyph_info
                     glyph_info.add_glyph_file_info(file_info)
                     path_to_glyph_file_info[str(file_info.file_path)] = file_info
+
         return DesignContext(
             root_dir,
             defined_dir_flavors,
