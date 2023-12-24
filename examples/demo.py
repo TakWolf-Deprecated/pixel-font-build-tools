@@ -28,6 +28,19 @@ language_flavors = [
 def main():
     context = DesignContext.load(glyphs_dir, defined_dir_flavors=width_modes, defined_name_flavors=language_flavors)
     context.standardize_glyph_files()
+    context.fallback_default_name_flavor()
+    for weight_mode in width_modes:
+        context.get_sequence(weight_mode)
+        context.get_sequence()
+        context.get_alphabet(weight_mode)
+        context.get_alphabet()
+        for language_flavor in language_flavors:
+            context.get_character_mapping(weight_mode, language_flavor)
+            context.get_character_mapping()
+            context.get_glyph_file_infos(weight_mode, [language_flavor])
+            context.get_glyph_file_infos(weight_mode)
+            context.get_glyph_file_infos()
+    print()
 
 
 if __name__ == '__main__':
