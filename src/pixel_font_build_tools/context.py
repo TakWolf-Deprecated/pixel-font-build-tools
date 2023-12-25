@@ -56,8 +56,10 @@ class GlyphFileInfo:
         self.code_point = code_point
         self.dir_flavor = dir_flavor
         self.name_flavors = name_flavors
-        self.glyph_data, self.glyph_width, self.glyph_height = glyph_util.load_glyph_data_from_png(file_path)
-        logger.debug("Load glyph data: '%s'", file_path)
+
+        self._glyph_data = None
+        self._glyph_width = None
+        self._glyph_height = None
 
     @property
     def glyph_name(self) -> str:
@@ -68,6 +70,28 @@ class GlyphFileInfo:
         if len(self.name_flavors) != 0:
             glyph_name = f'{glyph_name}-{self.name_flavors[0]}'
         return glyph_name
+
+    @property
+    def glyph_data(self) -> list[list[int]]:
+        if self._glyph_data is None:
+            self.load_glyph_data()
+        return self._glyph_data
+
+    @property
+    def glyph_width(self) -> int:
+        if self._glyph_width is None:
+            self.load_glyph_data()
+        return self._glyph_width
+
+    @property
+    def glyph_height(self) -> int:
+        if self._glyph_height is None:
+            self.load_glyph_data()
+        return self._glyph_height
+
+    def load_glyph_data(self):
+        self._glyph_data, self._glyph_width, self._glyph_height = glyph_util.load_glyph_data_from_png(self.file_path)
+        logger.debug("Load glyph data: '%s'", self.file_path)
 
     def save_glyph_data(self):
         glyph_util.save_glyph_data_to_png(self.glyph_data, self.file_path)
@@ -297,6 +321,7 @@ class DesignContext:
                     assert name_flavor_registry is not None
                     file_info = name_flavor_registry.get(name_flavor, name_flavor_registry.get(DEFAULT_NAME_FLAVOR, None))
                     assert file_info is not None, f"No default name flavor: '{dir_flavor} {code_point:04X}'"
-                    glyph_file_infos.append(file_info)
+                    if file_info not in glyph_file_infos:
+                        glyph_file_infos.append(file_info)
             self._glyph_file_infos_cacher[cache_name] = glyph_file_infos
         return glyph_file_infos
