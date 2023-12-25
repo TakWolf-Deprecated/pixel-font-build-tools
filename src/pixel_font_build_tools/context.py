@@ -263,6 +263,8 @@ class DesignContext:
         else:
             character_mapping = {}
             for code_point, glyph_info in self.code_point_to_glyph_info.items():
+                if code_point == -1:
+                    continue
                 name_flavor_registry = glyph_info.query_by_dir_flavor(dir_flavor)
                 if name_flavor_registry is not None:
                     file_info = name_flavor_registry.get(name_flavor, name_flavor_registry.get(DEFAULT_NAME_FLAVOR, None))
