@@ -21,7 +21,7 @@ class GlyphFileInfo:
             file_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             file_name: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             dir_flavor: str,
-            defined_name_flavors: list[str] | None,
+            defined_name_flavors: list[str],
     ) -> 'GlyphFileInfo':
         file_path = os.path.join(file_dir, file_name)
         assert file_name.endswith('.png'), f"Glyph file not '.png' file: '{file_path}'"
@@ -37,12 +37,11 @@ class GlyphFileInfo:
         if len(tokens) == 2:
             for name_flavor in tokens[1].lower().split(','):
                 name_flavor = name_flavor.strip()
-                if defined_name_flavors is not None:
-                    assert name_flavor in defined_name_flavors, f"Undefined name flavor '{name_flavor}': '{file_path}'"
+                assert name_flavor != DEFAULT_NAME_FLAVOR, f"'{DEFAULT_NAME_FLAVOR}' should not be used as a name flavor directly: '{file_path}'"
+                assert name_flavor in defined_name_flavors, f"Undefined name flavor '{name_flavor}': '{file_path}'"
                 if name_flavor not in name_flavors:
                     name_flavors.append(name_flavor)
-            if defined_name_flavors is not None:
-                name_flavors.sort(key=lambda x: defined_name_flavors.index(x))
+            name_flavors.sort(key=lambda x: defined_name_flavors.index(x))
 
         return GlyphFileInfo(file_path, code_point, dir_flavor, name_flavors)
 
@@ -93,14 +92,16 @@ class GlyphInfo:
 
     def fallback_default_name_flavor(self, defined_name_flavors: list[str]):
         for name_flavor_registry in self._dir_flavor_registry.values():
-            if DEFAULT_NAME_FLAVOR not in name_flavor_registry:
-                for name_flavor in defined_name_flavors:
-                    if name_flavor in name_flavor_registry:
-                        file_info = name_flavor_registry[name_flavor]
-                        for exist_name_flavor in file_info.name_flavors:
-                            assert name_flavor_registry.pop(exist_name_flavor) == file_info
-                        file_info.name_flavors.clear()
-                        name_flavor_registry[DEFAULT_NAME_FLAVOR] = file_info
+            if DEFAULT_NAME_FLAVOR in name_flavor_registry:
+                continue
+            for name_flavor in defined_name_flavors:
+                if name_flavor in name_flavor_registry:
+                    file_info = name_flavor_registry[name_flavor]
+                    for exist_name_flavor in file_info.name_flavors:
+                        assert name_flavor_registry.pop(exist_name_flavor) == file_info
+                    file_info.name_flavors.clear()
+                    name_flavor_registry[DEFAULT_NAME_FLAVOR] = file_info
+                    break
 
     def query_by_dir_flavor(self, dir_flavor: str = DEFAULT_DIR_FLAVOR) -> dict[str, GlyphFileInfo] | None:
         if dir_flavor in self._dir_flavor_registry:
@@ -118,10 +119,10 @@ class DesignContext:
             defined_dir_flavors: list[str] = None,
             defined_name_flavors: list[str] = None,
     ) -> 'DesignContext':
-        if defined_dir_flavors is not None and len(defined_dir_flavors) == 0:
-            defined_dir_flavors = None
-        if defined_name_flavors is not None and len(defined_name_flavors) == 0:
-            defined_name_flavors = None
+        if defined_dir_flavors is None or len(defined_dir_flavors) == 0:
+            defined_dir_flavors = [DEFAULT_DIR_FLAVOR]
+        if defined_name_flavors is None or len(defined_name_flavors) == 0:
+            defined_name_flavors = [DEFAULT_NAME_FLAVOR]
 
         code_point_to_glyph_info = {}
         path_to_glyph_file_info = {}
@@ -130,7 +131,7 @@ class DesignContext:
             dir_flavor_path = os.path.join(root_dir, dir_flavor)
             if not os.path.isdir(dir_flavor_path):
                 continue
-            if dir_flavor != DEFAULT_DIR_FLAVOR and defined_dir_flavors is not None:
+            if dir_flavor != DEFAULT_DIR_FLAVOR:
                 assert dir_flavor in defined_dir_flavors, f"Undefined dir flavor: '{dir_flavor}'"
             for file_dir, _, file_names in os.walk(dir_flavor_path):
                 for file_name in file_names:
@@ -157,8 +158,8 @@ class DesignContext:
     def __init__(
             self,
             root_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes],
-            defined_dir_flavors: list[str] | None,
-            defined_name_flavors: list[str] | None,
+            defined_dir_flavors: list[str],
+            defined_name_flavors: list[str],
             code_point_to_glyph_info: dict[int, GlyphInfo],
             path_to_glyph_file_info: dict[str, GlyphFileInfo],
     ):
@@ -216,16 +217,15 @@ class DesignContext:
                 os.rmdir(old_file_dir)
 
     def fallback_default_name_flavor(self):
-        assert self.defined_name_flavors is not None, 'Must define name flavors'
         for glyph_info in self.code_point_to_glyph_info.values():
             glyph_info.fallback_default_name_flavor(self.defined_name_flavors)
 
     def _check_dir_flavor_validity(self, dir_flavor: str):
-        if self.defined_dir_flavors is not None and dir_flavor != DEFAULT_DIR_FLAVOR:
+        if dir_flavor != DEFAULT_DIR_FLAVOR:
             assert dir_flavor in self.defined_dir_flavors, f"Undefined dir flavor: '{dir_flavor}'"
 
     def _check_name_flavor_validity(self, name_flavor: str):
-        if self.defined_name_flavors is not None and name_flavor != DEFAULT_NAME_FLAVOR:
+        if name_flavor != DEFAULT_NAME_FLAVOR:
             assert name_flavor in self.defined_name_flavors, f"Undefined name flavor: '{name_flavor}'"
 
     def get_sequence(self, dir_flavor: str = DEFAULT_DIR_FLAVOR) -> list[int]:
@@ -268,7 +268,7 @@ class DesignContext:
                 name_flavor_registry = glyph_info.query_by_dir_flavor(dir_flavor)
                 if name_flavor_registry is not None:
                     file_info = name_flavor_registry.get(name_flavor, name_flavor_registry.get(DEFAULT_NAME_FLAVOR, None))
-                    assert file_info is not None, f"No default name flavor: '{dir_flavor} - {code_point:04X}'"
+                    assert file_info is not None, f"No default name flavor: '{dir_flavor} {code_point:04X}'"
                     character_mapping[code_point] = file_info.glyph_name
             self._character_mapping_cacher[cache_name] = character_mapping
         return character_mapping
@@ -280,7 +280,6 @@ class DesignContext:
     ) -> list[GlyphFileInfo]:
         self._check_dir_flavor_validity(dir_flavor)
         if name_flavors is None:
-            assert self.defined_name_flavors is not None, 'Must define name flavors'
             name_flavors = self.defined_name_flavors
         else:
             for name_flavor in name_flavors:
@@ -295,7 +294,9 @@ class DesignContext:
                 for code_point in sequence:
                     glyph_info = self.code_point_to_glyph_info[code_point]
                     name_flavor_registry = glyph_info.query_by_dir_flavor(dir_flavor)
+                    assert name_flavor_registry is not None
                     file_info = name_flavor_registry.get(name_flavor, name_flavor_registry.get(DEFAULT_NAME_FLAVOR, None))
+                    assert file_info is not None, f"No default name flavor: '{dir_flavor} {code_point:04X}'"
                     glyph_file_infos.append(file_info)
             self._glyph_file_infos_cacher[cache_name] = glyph_file_infos
         return glyph_file_infos
