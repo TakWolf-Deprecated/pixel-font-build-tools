@@ -56,10 +56,7 @@ class GlyphFileInfo:
         self.code_point = code_point
         self.dir_flavor = dir_flavor
         self.name_flavors = name_flavors
-
-        self._glyph_data = None
-        self._glyph_width = None
-        self._glyph_height = None
+        self.glyph_data, self.glyph_width, self.glyph_height = glyph_util.load_glyph_data_from_png(file_path)
 
     @property
     def glyph_name(self) -> str:
@@ -71,31 +68,8 @@ class GlyphFileInfo:
             glyph_name = f'{glyph_name}-{self.name_flavors[0]}'
         return glyph_name
 
-    @property
-    def glyph_data(self) -> list[list[int]]:
-        if self._glyph_data is None:
-            self.load_glyph_data()
-        return self._glyph_data
-
-    @property
-    def glyph_width(self) -> int:
-        if self._glyph_width is None:
-            self.load_glyph_data()
-        return self._glyph_width
-
-    @property
-    def glyph_height(self) -> int:
-        if self._glyph_height is None:
-            self.load_glyph_data()
-        return self._glyph_height
-
-    def load_glyph_data(self):
-        self._glyph_data, self._glyph_width, self._glyph_height = glyph_util.load_glyph_data_from_png(self.file_path)
-        logger.debug("Load glyph data: '%s'", self.file_path)
-
-    def save_glyph_data(self):
+    def save(self):
         glyph_util.save_glyph_data_to_png(self.glyph_data, self.file_path)
-        logger.debug("Save glyph data: '%s'", self.file_path)
 
 
 class GlyphInfo:
@@ -206,7 +180,7 @@ class DesignContext:
                 old_file_path = os.path.join(old_file_dir, old_file_name)
                 assert old_file_path in self.path_to_glyph_file_info, f"Unmatched glyph file: '{old_file_path}'"
                 file_info = self.path_to_glyph_file_info[old_file_path]
-                file_info.save_glyph_data()
+                file_info.save()
 
                 code_point = file_info.code_point
                 if code_point == -1:
