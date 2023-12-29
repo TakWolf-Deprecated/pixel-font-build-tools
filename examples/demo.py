@@ -91,22 +91,22 @@ def _create_builder(
     character_mapping = context.get_character_mapping(width_mode, language_flavor)
     builder.character_mapping.update(character_mapping)
 
-    file_infos = context.get_glyph_file_infos(width_mode, None if is_collection else [language_flavor])
-    for file_info in file_infos:
-        if file_info.file_path in glyph_cacher:
-            glyph = glyph_cacher[file_info.file_path]
+    glyph_files = context.get_glyph_files(width_mode, None if is_collection else [language_flavor])
+    for glyph_file in glyph_files:
+        if glyph_file.file_path in glyph_cacher:
+            glyph = glyph_cacher[glyph_file.file_path]
         else:
-            horizontal_origin_y = math.floor((layout_params.ascent + layout_params.descent - file_info.glyph_height) / 2)
-            vertical_origin_y = (file_info.glyph_height - font_size) // 2
+            horizontal_origin_y = math.floor((layout_params.ascent + layout_params.descent - glyph_file.glyph_height) / 2)
+            vertical_origin_y = (glyph_file.glyph_height - font_size) // 2
             glyph = Glyph(
-                name=file_info.glyph_name,
-                advance_width=file_info.glyph_width,
+                name=glyph_file.glyph_name,
+                advance_width=glyph_file.glyph_width,
                 advance_height=font_size,
                 horizontal_origin=(0, horizontal_origin_y),
                 vertical_origin_y=vertical_origin_y,
-                data=file_info.glyph_data,
+                data=glyph_file.glyph_data,
             )
-            glyph_cacher[file_info.file_path] = glyph
+            glyph_cacher[glyph_file.file_path] = glyph
         builder.glyphs.append(glyph)
 
     return builder

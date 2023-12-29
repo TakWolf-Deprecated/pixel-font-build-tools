@@ -15,14 +15,14 @@ DEFAULT_DIR_FLAVOR = 'common'
 DEFAULT_NAME_FLAVOR = 'default'
 
 
-class GlyphFileInfo:
+class GlyphFile:
     @staticmethod
     def load(
             file_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             file_name: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             dir_flavor: str,
             defined_name_flavors: list[str],
-    ) -> 'GlyphFileInfo':
+    ) -> 'GlyphFile':
         file_path = os.path.join(file_dir, file_name)
         assert file_name.endswith('.png'), f"Glyph file not '.png' file: '{file_path}'"
         tokens = file_name.removesuffix('.png').split(' ', 1)
@@ -43,7 +43,7 @@ class GlyphFileInfo:
                     name_flavors.append(name_flavor)
             name_flavors.sort(key=lambda x: defined_name_flavors.index(x))
 
-        return GlyphFileInfo(file_path, code_point, dir_flavor, name_flavors)
+        return GlyphFile(file_path, code_point, dir_flavor, name_flavors)
 
     def __init__(
             self,
@@ -75,18 +75,18 @@ class GlyphFileInfo:
 class GlyphInfo:
     def __init__(self, code_point: int):
         self.code_point = code_point
-        self._dir_flavor_registry: dict[str, dict[str, GlyphFileInfo]] = defaultdict(dict)
+        self._dir_flavor_registry: dict[str, dict[str, GlyphFile]] = defaultdict(dict)
 
-    def add_glyph_file_info(self, file_info: GlyphFileInfo):
-        name_flavor_registry = self._dir_flavor_registry[file_info.dir_flavor]
-        if len(file_info.name_flavors) == 0:
+    def add_glyph_file(self, glyph_file: GlyphFile):
+        name_flavor_registry = self._dir_flavor_registry[glyph_file.dir_flavor]
+        if len(glyph_file.name_flavors) == 0:
             name_flavor = DEFAULT_NAME_FLAVOR
-            assert name_flavor not in name_flavor_registry, f"Glyph file default name flavor already exists:\n'{file_info.file_path}'\n'{name_flavor_registry[name_flavor].file_path}'"
-            name_flavor_registry[name_flavor] = file_info
+            assert name_flavor not in name_flavor_registry, f"Glyph file default name flavor already exists:\n'{glyph_file.file_path}'\n'{name_flavor_registry[name_flavor].file_path}'"
+            name_flavor_registry[name_flavor] = glyph_file
         else:
-            for name_flavor in file_info.name_flavors:
-                assert name_flavor not in name_flavor_registry, f"Glyph file name flavor '{name_flavor}' already exists:\n'{file_info.file_path}'\n'{name_flavor_registry[name_flavor].file_path}'"
-                name_flavor_registry[name_flavor] = file_info
+            for name_flavor in glyph_file.name_flavors:
+                assert name_flavor not in name_flavor_registry, f"Glyph file name flavor '{name_flavor}' already exists:\n'{glyph_file.file_path}'\n'{name_flavor_registry[name_flavor].file_path}'"
+                name_flavor_registry[name_flavor] = glyph_file
 
     def fallback_default_name_flavor(self, defined_name_flavors: list[str]):
         for name_flavor_registry in self._dir_flavor_registry.values():
@@ -94,14 +94,14 @@ class GlyphInfo:
                 continue
             for name_flavor in defined_name_flavors:
                 if name_flavor in name_flavor_registry:
-                    file_info = name_flavor_registry[name_flavor]
-                    for exist_name_flavor in file_info.name_flavors:
-                        assert name_flavor_registry.pop(exist_name_flavor) == file_info
-                    file_info.name_flavors.clear()
-                    name_flavor_registry[DEFAULT_NAME_FLAVOR] = file_info
+                    glyph_file = name_flavor_registry[name_flavor]
+                    for exist_name_flavor in glyph_file.name_flavors:
+                        assert name_flavor_registry.pop(exist_name_flavor) == glyph_file
+                    glyph_file.name_flavors.clear()
+                    name_flavor_registry[DEFAULT_NAME_FLAVOR] = glyph_file
                     break
 
-    def query_by_dir_flavor(self, dir_flavor: str = DEFAULT_DIR_FLAVOR) -> dict[str, GlyphFileInfo] | None:
+    def query_by_dir_flavor(self, dir_flavor: str = DEFAULT_DIR_FLAVOR) -> dict[str, GlyphFile] | None:
         if dir_flavor in self._dir_flavor_registry:
             return self._dir_flavor_registry[dir_flavor]
         elif DEFAULT_DIR_FLAVOR in self._dir_flavor_registry:
@@ -123,7 +123,7 @@ class DesignContext:
             defined_name_flavors = [DEFAULT_NAME_FLAVOR]
 
         code_point_to_glyph_info = {}
-        path_to_glyph_file_info = {}
+        path_to_glyph_file = {}
 
         for dir_flavor in os.listdir(root_dir):
             dir_flavor_path = os.path.join(root_dir, dir_flavor)
@@ -135,22 +135,22 @@ class DesignContext:
                 for file_name in file_names:
                     if not file_name.endswith('.png'):
                         continue
-                    file_info = GlyphFileInfo.load(file_dir, file_name, dir_flavor, defined_name_flavors)
-                    code_point = file_info.code_point
+                    glyph_file = GlyphFile.load(file_dir, file_name, dir_flavor, defined_name_flavors)
+                    code_point = glyph_file.code_point
                     if code_point in code_point_to_glyph_info:
                         glyph_info = code_point_to_glyph_info[code_point]
                     else:
                         glyph_info = GlyphInfo(code_point)
                         code_point_to_glyph_info[code_point] = glyph_info
-                    glyph_info.add_glyph_file_info(file_info)
-                    path_to_glyph_file_info[str(file_info.file_path)] = file_info
+                    glyph_info.add_glyph_file(glyph_file)
+                    path_to_glyph_file[str(glyph_file.file_path)] = glyph_file
 
         return DesignContext(
             root_dir,
             defined_dir_flavors,
             defined_name_flavors,
             code_point_to_glyph_info,
-            path_to_glyph_file_info,
+            path_to_glyph_file,
         )
 
     def __init__(
@@ -159,18 +159,18 @@ class DesignContext:
             defined_dir_flavors: list[str],
             defined_name_flavors: list[str],
             code_point_to_glyph_info: dict[int, GlyphInfo],
-            path_to_glyph_file_info: dict[str, GlyphFileInfo],
+            path_to_glyph_file: dict[str, GlyphFile],
     ):
         self.root_dir = root_dir
         self.defined_dir_flavors = defined_dir_flavors
         self.defined_name_flavors = defined_name_flavors
         self.code_point_to_glyph_info = code_point_to_glyph_info
-        self.path_to_glyph_file_info = path_to_glyph_file_info
+        self.path_to_glyph_file = path_to_glyph_file
 
         self._sequence_cacher: dict[str, list[int]] = {}
         self._alphabet_cacher: dict[str, list[str]] = {}
         self._character_mapping_cacher: dict[(str, str), dict[int, str]] = {}
-        self._glyph_file_infos_cacher: dict[(str, str | None), list[GlyphFileInfo]] = {}
+        self._glyph_files_cacher: dict[(str, str | None), list[GlyphFile]] = {}
 
     def standardize_glyph_files(self):
         for old_file_dir, _, old_file_names in list(os.walk(self.root_dir, topdown=False)):
@@ -178,18 +178,18 @@ class DesignContext:
                 if not old_file_name.endswith('.png'):
                     continue
                 old_file_path = os.path.join(old_file_dir, old_file_name)
-                assert old_file_path in self.path_to_glyph_file_info, f"Unmatched glyph file: '{old_file_path}'"
-                file_info = self.path_to_glyph_file_info[old_file_path]
-                file_info.save()
+                assert old_file_path in self.path_to_glyph_file, f"Unmatched glyph file: '{old_file_path}'"
+                glyph_file = self.path_to_glyph_file[old_file_path]
+                glyph_file.save()
 
-                code_point = file_info.code_point
+                code_point = glyph_file.code_point
                 if code_point == -1:
                     hex_name = _HEX_NAME_NOTDEF
                 else:
                     hex_name = f'{code_point:04X}'
-                name_flavors = file_info.name_flavors
+                name_flavors = glyph_file.name_flavors
                 file_name = f'{hex_name}{"" if len(name_flavors) == 0 else " "}{",".join(name_flavors)}.png'
-                file_dir = os.path.join(self.root_dir, file_info.dir_flavor)
+                file_dir = os.path.join(self.root_dir, glyph_file.dir_flavor)
                 if code_point != -1:
                     block = unidata_blocks.get_block_by_code_point(code_point)
                     block_dir_name = f'{block.code_start:04X}-{block.code_end:04X} {block.name}'
@@ -202,9 +202,9 @@ class DesignContext:
                     assert not os.path.exists(file_path), f"Glyph file duplicate:\n'{file_path}'\n'{old_file_path}'"
                     fs_util.make_dirs(file_dir)
                     os.rename(old_file_path, file_path)
-                    file_info.file_path = file_path
-                    self.path_to_glyph_file_info.pop(old_file_path)
-                    self.path_to_glyph_file_info[file_path] = file_info
+                    glyph_file.file_path = file_path
+                    self.path_to_glyph_file.pop(old_file_path)
+                    self.path_to_glyph_file[file_path] = glyph_file
                     logger.debug("Fix glyph file path:\nfrom '%s'\nto   '%s'", old_file_path, file_path)
 
             other_file_names = os.listdir(old_file_dir)
@@ -265,17 +265,17 @@ class DesignContext:
                     continue
                 name_flavor_registry = glyph_info.query_by_dir_flavor(dir_flavor)
                 if name_flavor_registry is not None:
-                    file_info = name_flavor_registry.get(name_flavor, name_flavor_registry.get(DEFAULT_NAME_FLAVOR, None))
-                    assert file_info is not None, f"No default name flavor: '{dir_flavor} {code_point:04X}'"
-                    character_mapping[code_point] = file_info.glyph_name
+                    glyph_file = name_flavor_registry.get(name_flavor, name_flavor_registry.get(DEFAULT_NAME_FLAVOR, None))
+                    assert glyph_file is not None, f"No default name flavor: '{dir_flavor} {code_point:04X}'"
+                    character_mapping[code_point] = glyph_file.glyph_name
             self._character_mapping_cacher[cache_name] = character_mapping
         return character_mapping
 
-    def get_glyph_file_infos(
+    def get_glyph_files(
             self,
             dir_flavor: str = DEFAULT_DIR_FLAVOR,
             name_flavors: list[str] = None,
-    ) -> list[GlyphFileInfo]:
+    ) -> list[GlyphFile]:
         self._check_dir_flavor_validity(dir_flavor)
         if name_flavors is None:
             name_flavors = self.defined_name_flavors
@@ -283,19 +283,19 @@ class DesignContext:
             for name_flavor in name_flavors:
                 self._check_name_flavor_validity(name_flavor)
         cache_name = dir_flavor, ','.join(name_flavors)
-        if cache_name is self._glyph_file_infos_cacher:
-            glyph_file_infos = self._glyph_file_infos_cacher[cache_name]
+        if cache_name is self._glyph_files_cacher:
+            glyph_files = self._glyph_files_cacher[cache_name]
         else:
-            glyph_file_infos = []
+            glyph_files = []
             sequence = self.get_sequence(dir_flavor)
             for name_flavor in name_flavors:
                 for code_point in sequence:
                     glyph_info = self.code_point_to_glyph_info[code_point]
                     name_flavor_registry = glyph_info.query_by_dir_flavor(dir_flavor)
                     assert name_flavor_registry is not None
-                    file_info = name_flavor_registry.get(name_flavor, name_flavor_registry.get(DEFAULT_NAME_FLAVOR, None))
-                    assert file_info is not None, f"No default name flavor: '{dir_flavor} {code_point:04X}'"
-                    if file_info not in glyph_file_infos:
-                        glyph_file_infos.append(file_info)
-            self._glyph_file_infos_cacher[cache_name] = glyph_file_infos
-        return glyph_file_infos
+                    glyph_file = name_flavor_registry.get(name_flavor, name_flavor_registry.get(DEFAULT_NAME_FLAVOR, None))
+                    assert glyph_file is not None, f"No default name flavor: '{dir_flavor} {code_point:04X}'"
+                    if glyph_file not in glyph_files:
+                        glyph_files.append(glyph_file)
+            self._glyph_files_cacher[cache_name] = glyph_files
+        return glyph_files
