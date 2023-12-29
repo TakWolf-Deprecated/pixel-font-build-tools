@@ -8,8 +8,6 @@ from pixel_font_build_tools.utils import glyph_util, fs_util
 
 logger = logging.getLogger('pixel_font_build_tools.context')
 
-_GLYPH_NAME_NOTDEF = '.notdef'
-
 DEFAULT_DIR_FLAVOR = 'common'
 DEFAULT_NAME_FLAVOR = 'default'
 
@@ -53,7 +51,7 @@ class GlyphFile:
     @property
     def glyph_name(self) -> str:
         if self.code_point == -1:
-            glyph_name = _GLYPH_NAME_NOTDEF
+            glyph_name = '.notdef'
         else:
             glyph_name = f'uni{self.code_point:04X}'
         if len(self.name_flavors) != 0:
