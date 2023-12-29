@@ -8,7 +8,6 @@ from pixel_font_build_tools.utils import glyph_util, fs_util
 
 logger = logging.getLogger('pixel_font_build_tools.context')
 
-_HEX_NAME_NOTDEF = 'notdef'
 _GLYPH_NAME_NOTDEF = '.notdef'
 
 DEFAULT_DIR_FLAVOR = 'common'
@@ -18,25 +17,18 @@ DEFAULT_NAME_FLAVOR = 'default'
 class GlyphFile:
     @staticmethod
     def load(
-            file_dir: str | bytes | os.PathLike[str] | os.PathLike[bytes],
-            file_name: str | bytes | os.PathLike[str] | os.PathLike[bytes],
+            file_path: str | bytes | os.PathLike[str] | os.PathLike[bytes],
             dir_flavor: str,
             defined_name_flavors: list[str],
     ) -> 'GlyphFile':
-        file_path = os.path.join(file_dir, file_name)
-        assert file_name.endswith('.png'), f"Glyph file not '.png' file: '{file_path}'"
-        tokens = file_name.removesuffix('.png').split(' ', 1)
+        assert file_path.endswith('.png'), f"Glyph file not a '.png' file: '{file_path}'"
 
-        hex_name = tokens[0].strip()
-        if hex_name == _HEX_NAME_NOTDEF:
-            code_point = -1
-        else:
-            code_point = int(tokens[0].strip(), 16)
-
+        tokens = os.path.basename(file_path).removesuffix('.png').split(' ', 1)
+        code_point = glyph_util.hex_name_to_code_point(tokens[0].strip())
         name_flavors = []
         if len(tokens) == 2:
-            for name_flavor in tokens[1].lower().split(','):
-                name_flavor = name_flavor.strip()
+            for name_flavor in tokens[1].split(','):
+                name_flavor = name_flavor.lower().strip()
                 assert name_flavor != DEFAULT_NAME_FLAVOR, f"'{DEFAULT_NAME_FLAVOR}' should not be used as a name flavor directly: '{file_path}'"
                 assert name_flavor in defined_name_flavors, f"Undefined name flavor '{name_flavor}': '{file_path}'"
                 if name_flavor not in name_flavors:
@@ -135,7 +127,8 @@ class DesignContext:
                 for file_name in file_names:
                     if not file_name.endswith('.png'):
                         continue
-                    glyph_file = GlyphFile.load(file_dir, file_name, dir_flavor, defined_name_flavors)
+                    file_path = os.path.join(file_dir, file_name)
+                    glyph_file = GlyphFile.load(file_path, dir_flavor, defined_name_flavors)
                     code_point = glyph_file.code_point
                     if code_point in code_point_to_glyph_info:
                         glyph_info = code_point_to_glyph_info[code_point]
@@ -183,10 +176,7 @@ class DesignContext:
                 glyph_file.save()
 
                 code_point = glyph_file.code_point
-                if code_point == -1:
-                    hex_name = _HEX_NAME_NOTDEF
-                else:
-                    hex_name = f'{code_point:04X}'
+                hex_name = glyph_util.code_point_to_hex_name(glyph_file.code_point)
                 name_flavors = glyph_file.name_flavors
                 file_name = f'{hex_name}{"" if len(name_flavors) == 0 else " "}{",".join(name_flavors)}.png'
                 file_dir = os.path.join(self.root_dir, glyph_file.dir_flavor)

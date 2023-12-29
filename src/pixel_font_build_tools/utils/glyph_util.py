@@ -37,3 +37,19 @@ def save_glyph_data_to_png(
                 bitmap_row.append(255)
         bitmap.append(bitmap_row)
     png.from_array(bitmap, 'RGBA').save(file_path)
+
+
+def hex_name_to_code_point(hex_name: str) -> int:
+    if hex_name == 'notdef':
+        code_point = -1
+    else:
+        code_point = int(hex_name, 16)
+    return code_point
+
+
+def code_point_to_hex_name(code_point: int) -> str:
+    if code_point == -1:
+        hex_name = 'notdef'
+    else:
+        hex_name = f'{code_point:04X}'
+    return hex_name
