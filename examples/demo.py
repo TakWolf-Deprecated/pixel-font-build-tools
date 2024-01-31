@@ -59,23 +59,23 @@ def _create_builder(
     builder = FontBuilder(font_size)
 
     family_name = 'Demo Pixel'
-    builder.meta_infos.version = '1.0.0'
-    builder.meta_infos.family_name = f'{family_name} {width_mode.capitalize()} {language_flavor}'
-    builder.meta_infos.style_name = StyleName.REGULAR
-    builder.meta_infos.serif_mode = SerifMode.SANS_SERIF
-    builder.meta_infos.width_mode = width_mode.capitalize()
-    builder.meta_infos.manufacturer = 'Pixel Font Studio'
-    builder.meta_infos.designer = 'TakWolf'
-    builder.meta_infos.description = 'A demo pixel font.'
-    builder.meta_infos.copyright_info = 'Copyright (c) TakWolf'
-    builder.meta_infos.license_info = 'This Font Software is licensed under the SIL Open Font License, Version 1.1.'
-    builder.meta_infos.vendor_url = 'https://github.com/TakWolf/pixel-font-build-tools'
-    builder.meta_infos.designer_url = 'https://takwolf.com'
-    builder.meta_infos.license_url = 'https://scripts.sil.org/OFL'
-    builder.meta_infos.sample_text = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n我们度过的每个平凡的日常，也许就是连续发生的奇迹。\n我們度過的每個平凡的日常，也許就是連續發生的奇蹟。'
+    builder.meta_info.version = '1.0.0'
+    builder.meta_info.family_name = f'{family_name} {width_mode.capitalize()} {language_flavor}'
+    builder.meta_info.style_name = StyleName.REGULAR
+    builder.meta_info.serif_mode = SerifMode.SANS_SERIF
+    builder.meta_info.width_mode = width_mode.capitalize()
+    builder.meta_info.manufacturer = 'Pixel Font Studio'
+    builder.meta_info.designer = 'TakWolf'
+    builder.meta_info.description = 'A demo pixel font.'
+    builder.meta_info.copyright_info = 'Copyright (c) TakWolf'
+    builder.meta_info.license_info = 'This Font Software is licensed under the SIL Open Font License, Version 1.1.'
+    builder.meta_info.vendor_url = 'https://github.com/TakWolf/pixel-font-build-tools'
+    builder.meta_info.designer_url = 'https://takwolf.com'
+    builder.meta_info.license_url = 'https://scripts.sil.org/OFL'
+    builder.meta_info.sample_text = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n我们度过的每个平凡的日常，也许就是连续发生的奇迹。\n我們度過的每個平凡的日常，也許就是連續發生的奇蹟。'
 
     if is_collection:
-        builder.opentype_configs.cff_family_name = f'{family_name} {width_mode.capitalize()}'
+        builder.opentype_config.cff_family_name = f'{family_name} {width_mode.capitalize()}'
 
     layout_params = width_mode_to_layout_params[width_mode]
 
@@ -85,8 +85,8 @@ def _create_builder(
     builder.vertical_header.ascent = layout_params.ascent
     builder.vertical_header.descent = layout_params.descent
 
-    builder.properties.x_height = layout_params.x_height
-    builder.properties.cap_height = layout_params.cap_height
+    builder.os2_config.x_height = layout_params.x_height
+    builder.os2_config.cap_height = layout_params.cap_height
 
     character_mapping = context.get_character_mapping(width_mode, language_flavor)
     builder.character_mapping.update(character_mapping)
