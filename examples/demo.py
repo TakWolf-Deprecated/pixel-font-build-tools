@@ -71,7 +71,7 @@ def _create_builder(
     builder.meta_info.license_info = 'This Font Software is licensed under the SIL Open Font License, Version 1.1.'
     builder.meta_info.vendor_url = 'https://github.com/TakWolf/pixel-font-build-tools'
     builder.meta_info.designer_url = 'https://takwolf.com'
-    builder.meta_info.license_url = 'https://scripts.sil.org/OFL'
+    builder.meta_info.license_url = 'https://openfontlicense.org'
     builder.meta_info.sample_text = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n我们度过的每个平凡的日常，也许就是连续发生的奇迹。\n我們度過的每個平凡的日常，也許就是連續發生的奇蹟。'
 
     if is_collection:
