@@ -2,4 +2,4 @@ pixel-font-builder==0.0.15
 unidata-blocks==0.0.9
 pypng==0.20220715.0
 
-pytest==8.0.2
+pytest==8.1.1
